@@ -2,6 +2,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Install native build tools for node-gyp (required for argon2, etc)
+RUN apk add --no-cache python3 make g++
+
 # Install dependencies first (for caching)
 COPY package.json package-lock.json ./
 COPY prisma ./prisma/
