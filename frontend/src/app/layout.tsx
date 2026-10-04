@@ -13,9 +13,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import { ThemeProvider } from "@/components/theme-provider";
+
 export const metadata: Metadata = {
-  title: "Impulso Jovem",
-  description: "Conectando talentos a oportunidades incríveis.",
+  title: "Impulso IA - Letramento Digital & Carreira",
+  description: "Treine para entrevistas com IA e gere currículos incríveis.",
 };
 
 export default function RootLayout({
@@ -24,11 +26,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-black text-white">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+    <html lang="pt-BR" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} h-full antialiased scroll-smooth`}>
+      <body className="min-h-full flex flex-col bg-white dark:bg-zinc-950 text-gray-900 dark:text-white transition-colors duration-300">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -13,6 +13,9 @@ const booleano = z
   .optional()
   .transform((v) => v === 'true');
 
+/** Trata `VAR=` (vazia) no .env como não definida. */
+const vazioParaUndefined = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? undefined : v);
+
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3333),
@@ -46,6 +49,16 @@ const schema = z.object({
   MAIL_FROM: z.string().default('Impulso Jovem <nao-responda@impulsojovem.com.br>'),
 
   LGPD_TERMO_VERSAO: z.string().default('2026.1'),
+
+  // Integração com o n8n (IA recrutadora no WhatsApp + refinamento de currículo)
+  /** Chave enviada pelo n8n no header `x-api-key`. Sem ela, os webhooks ficam desativados. */
+  N8N_API_KEY: z.preprocess(
+    vazioParaUndefined,
+    z.string().min(32, 'N8N_API_KEY deve ter ao menos 32 caracteres').optional(),
+  ),
+  /** Webhook do n8n que refina os textos do currículo com IA (opcional). */
+  N8N_CURRICULO_WEBHOOK_URL: z.preprocess(vazioParaUndefined, z.url().optional()),
+  N8N_TIMEOUT_MS: z.coerce.number().int().positive().default(30000),
 });
 
 const resultado = schema.safeParse(process.env);

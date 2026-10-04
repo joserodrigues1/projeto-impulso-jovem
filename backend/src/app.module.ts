@@ -11,6 +11,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { CurriculosModule } from './modules/curriculos/curriculos.module';
+import { EntrevistasModule } from './modules/entrevistas/entrevistas.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { CurriculosModule } from './modules/curriculos/curriculos.module';
     UsuariosModule,
     UploadsModule,
     CurriculosModule,
+    EntrevistasModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

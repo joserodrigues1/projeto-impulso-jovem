@@ -23,7 +23,19 @@ export default function RegisterPage() {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    let value: string | boolean = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    
+    if (e.target.name === 'telefone' && typeof value === 'string') {
+      value = value.replace(/\D/g, "");
+      if (value.length > 2 && value.length <= 11) {
+        value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+      } else if (value.length > 11) {
+        // limit to 11 digits
+        value = value.slice(0, 11);
+        value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+      }
+    }
+
     setFormData({ ...formData, [e.target.name]: value });
   };
 
@@ -106,7 +118,7 @@ export default function RegisterPage() {
             <Input
               name="telefone"
               type="tel"
-              placeholder="11999999999"
+              placeholder="(11) 99999-9999"
               value={formData.telefone}
               onChange={handleChange}
               required

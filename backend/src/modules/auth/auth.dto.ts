@@ -9,6 +9,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { SENHA_MENSAGEM, SENHA_REGEX } from '../../common/validators/documentos';
+import { normalizarTelefone, TELEFONE_NORMALIZADO_REGEX } from '../../common/validators/telefone';
 
 const normalizarEmail = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim().toLowerCase() : value;
@@ -29,8 +30,12 @@ export class CadastroUsuarioDto {
   @Matches(SENHA_REGEX, { message: SENHA_MENSAGEM })
   senha: string;
 
-  @IsString()
-  @Length(10, 20, { message: 'O telefone é obrigatório para falar com a IA' })
+  /** WhatsApp com DDD — aceita qualquer máscara; é salvo como 55 + DDD + número. */
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? (normalizarTelefone(value) ?? value) : value,
+  )
+  @IsString({ message: 'O WhatsApp é obrigatório para falar com a IA' })
+  @Matches(TELEFONE_NORMALIZADO_REGEX, { message: 'Informe um WhatsApp válido com DDD' })
   telefone: string;
 
   /** Consentimento explícito LGPD — obrigatório. */

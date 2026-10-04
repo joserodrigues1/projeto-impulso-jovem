@@ -32,7 +32,9 @@ model Usuario {
   senhaHash        String      @map("senha_hash") @db.VarChar(255)
   tipoUsuario      TipoUsuario @default(USUARIO) @map("tipo_usuario")
   statusConta      StatusConta @default(ATIVO) @map("status_conta")
-  telefone         String      @db.VarChar(20) // Obrigatório para a IA recrutadora (WhatsApp)
+  /// WhatsApp normalizado: 55 + DDD + número, somente dígitos (ex.: 5561999999999).
+  /// Chave de integração com a IA recrutadora (n8n).
+  telefone         String      @unique @db.VarChar(20)
   fotoUrl          String?     @map("foto_url") @db.VarChar(500)
   ultimoLoginEm    DateTime?   @map("ultimo_login_em")
   criadoEm         DateTime    @default(now()) @map("criado_em")
@@ -40,6 +42,7 @@ model Usuario {
 
   perfil            Perfil?
   curriculosGerados CurriculoGerado[]
+  entrevistas       EntrevistaBot[]
   refreshTokens     RefreshToken[]
   tokensRecuperacao TokenRecuperacaoSenha[]
   consentimentos    ConsentimentoLgpd[]
@@ -86,15 +89,38 @@ model Experiencia {
 // ───────────────────────── Geração de Currículo ─────────────────────────
 
 model CurriculoGerado {
-  id          String   @id @default(uuid()) @db.Uuid
-  usuarioId   String   @map("usuario_id") @db.Uuid
-  pdfUrl      String   @map("pdf_url") @db.VarChar(500)
-  geradoEm    DateTime @default(now()) @map("gerado_em")
+  id            String   @id @default(uuid()) @db.Uuid
+  usuarioId     String   @map("usuario_id") @db.Uuid
+  /// Snapshot dos dados do currículo (já refinados pela IA, quando disponível).
+  /// O PDF é renderizado sob demanda a partir deste conteúdo.
+  conteudo      Json
+  refinadoPorIa Boolean  @default(false) @map("refinado_por_ia")
+  geradoEm      DateTime @default(now()) @map("gerado_em")
 
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
-  @@index([usuarioId])
+  @@index([usuarioId, geradoEm])
   @@map("curriculos_gerados")
+}
+
+// ───────────────────────── Simulador de Entrevista (WhatsApp / n8n) ─────────────────────────
+
+/// Feedback gerado pela IA recrutadora ao final de cada simulação no WhatsApp.
+model EntrevistaBot {
+  id               String   @id @default(uuid()) @db.Uuid
+  usuarioId        String   @map("usuario_id") @db.Uuid
+  cargoAlvo        String   @map("cargo_alvo") @db.VarChar(150)
+  empresaAlvo      String?  @map("empresa_alvo") @db.VarChar(150)
+  pontosFortes     String   @map("pontos_fortes") @db.Text
+  pontosMelhoria   String   @map("pontos_melhoria") @db.Text
+  dicasComunicacao String   @map("dicas_comunicacao") @db.Text
+  dataRealizacao   DateTime @default(now()) @map("data_realizacao")
+  criadoEm         DateTime @default(now()) @map("criado_em")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, dataRealizacao])
+  @@map("entrevistas_bot")
 }
 
 // ───────────────────────── Segurança e LGPD ─────────────────────────

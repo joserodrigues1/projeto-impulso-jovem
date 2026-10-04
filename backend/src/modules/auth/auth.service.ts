@@ -12,6 +12,7 @@ import { randomUUID } from 'node:crypto';
 import { MetaRequisicao } from '../../common/decorators/auth.decorators';
 import { sha256, tokenAleatorio } from '../../common/crypto/crypto.util';
 import { JwtPayload } from '../../common/guards/auth.guards';
+import { variantesTelefone } from '../../common/validators/telefone';
 import { env } from '../../config/env';
 import { AuditoriaService } from '../../infra/auditoria.service';
 import { MailService } from '../../infra/mail.service';
@@ -74,8 +75,18 @@ export class AuthService {
     if (existe) throw new ConflictException('Este e-mail já está cadastrado');
   }
 
+  /** Bloqueia o mesmo WhatsApp em duas contas (inclusive a variante com/sem o 9º dígito). */
+  private async garantirTelefoneLivre(telefone: string) {
+    const existe = await this.prisma.usuario.findFirst({
+      where: { telefone: { in: variantesTelefone(telefone) } },
+      select: { id: true },
+    });
+    if (existe) throw new ConflictException('Este WhatsApp já está cadastrado em outra conta');
+  }
+
   async cadastrar(dto: CadastroUsuarioDto, meta: MetaRequisicao): Promise<Sessao> {
     await this.garantirEmailLivre(dto.email);
+    await this.garantirTelefoneLivre(dto.telefone);
 
     const usuario = await this.prisma.usuario.create({
       data: {

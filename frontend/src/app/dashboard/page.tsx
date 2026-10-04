@@ -90,6 +90,35 @@ export default function DashboardIndex() {
           </div>
         </div>
       </div>
+
+      {/* Dicas de Letramento Digital - Dashboard */}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 border border-gray-200 dark:border-gray-700 shadow-sm mt-12">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+          <Sparkles className="w-6 h-6 mr-3 text-indigo-500" />
+          Dicas de Letramento Digital
+        </h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800/30">
+            <h3 className="font-bold text-indigo-900 dark:text-indigo-300 mb-2">O Prompt Perfeito</h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+              Para ter a melhor ajuda da IA na hora de revisar um e-mail ou criar um texto, sempre dê <strong>contexto</strong>.
+            </p>
+            <div className="bg-white dark:bg-gray-900 p-3 rounded-xl border border-indigo-100 dark:border-indigo-800/50 text-xs text-gray-600 dark:text-gray-400 font-mono">
+              "Aja como um recrutador experiente. Vou colar minha carta de apresentação e quero que você avalie o que posso melhorar."
+            </div>
+          </div>
+          
+          <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800/30">
+            <h3 className="font-bold text-blue-900 dark:text-blue-300 mb-2">Treino para Entrevistas</h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+              Use a nossa IA no WhatsApp como seu professor. Se você não entendeu o feedback, faça perguntas!
+            </p>
+            <div className="bg-white dark:bg-gray-900 p-3 rounded-xl border border-blue-100 dark:border-blue-800/50 text-xs text-gray-600 dark:text-gray-400 font-mono">
+              "Por que você achou minha resposta sobre 'defeitos' clichê? Pode me dar um exemplo de uma resposta melhor?"
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

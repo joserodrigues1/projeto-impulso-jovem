@@ -60,7 +60,8 @@ export class CurriculosService {
     const curriculo = await this.prisma.curriculoGerado.create({
       data: {
         usuarioId: usuario.id,
-        pdfUrl,
+        conteudo: dados, // The snapshot is saved as JSON
+        refinadoPorIa: false, // Initially false, will be refined asynchronously by n8n
       },
     });
 

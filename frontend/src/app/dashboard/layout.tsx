@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { Bot, FileText, LayoutDashboard, LogOut, Settings } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, loading } = useAuth();
@@ -58,6 +59,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             IA Recrutadora
           </a>
 
+          <Link 
+            href="/dashboard/entrevistas" 
+            className={`flex items-center px-4 py-3 rounded-xl transition-colors text-sm font-medium ${pathname === '/dashboard/entrevistas' ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+          >
+            <Bot className="w-5 h-5 mr-3 opacity-70" />
+            Feedbacks de Entrevistas
+          </Link>
+
           <div className="mt-auto space-y-2 border-t border-gray-200 dark:border-gray-800 pt-4">
             <Link 
               href="/dashboard/perfil" 
@@ -83,6 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Top Navbar */}
         <header className="h-20 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md flex items-center justify-end px-8 shrink-0 z-10 sticky top-0">
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {user ? user.nomeCompleto : "Carregando..."}
             </div>

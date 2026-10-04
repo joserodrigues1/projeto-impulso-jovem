@@ -39,6 +39,7 @@ async function bootstrap() {
       .setDescription('Documentação da API do ecossistema Impulso Jovem')
       .setVersion('1.0')
       .addCookieAuth('ij_access')
+      .addApiKey({ type: 'apiKey', in: 'header', name: 'x-api-key' }, 'n8n-api-key')
       .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api/docs', app, document);
