@@ -1,0 +1,30 @@
+# Dependências
+node_modules/
+.pnpm-store/
+
+# Build
+dist/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Ambiente
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs / SO / IDE
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Testes
+playwright-report/
+test-results/

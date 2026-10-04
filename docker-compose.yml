@@ -1,0 +1,114 @@
+name: impulso-jovem
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ij-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-impulso}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-impulso}
+      POSTGRES_DB: ${POSTGRES_DB:-impulso_jovem}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-impulso} -d ${POSTGRES_DB:-impulso_jovem}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: ij-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+#   minio:
+#     image: bitnami/minio:latest
+#     container_name: ij-minio
+#     restart: unless-stopped
+#     command: server /data --console-address ":9001"
+#     environment:
+#       MINIO_ROOT_USER: ${S3_ACCESS_KEY:-impulso}
+#       MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-impulso-secret}
+#     ports:
+#       - "9000:9000"
+#       - "9001:9001"
+#     volumes:
+#       - minio_data:/data
+#     healthcheck:
+#       test: ["CMD", "mc", "ready", "local"]
+#       interval: 5s
+#       timeout: 5s
+#       retries: 10
+# 
+#   minio-init:
+#     image: bitnami/minio-client:latest
+#     container_name: ij-minio-init
+#     depends_on:
+#       minio:
+#         condition: service_healthy
+#     entrypoint: >
+#       /bin/sh -c "
+#       mc alias set local http://minio:9000 ${S3_ACCESS_KEY:-impulso} ${S3_SECRET_KEY:-impulso-secret} &&
+#       mc mb --ignore-existing local/${S3_BUCKET:-impulso-jovem} &&
+#       mc anonymous set download local/${S3_BUCKET:-impulso-jovem}/public &&
+#       echo 'bucket pronto'
+#       "
+# 
+#   mailpit:
+#     image: axllent/mailpit:latest
+#     container_name: ij-mailpit
+#     restart: unless-stopped
+#     ports:
+#       - "1025:1025"
+#       - "8025:8025"
+
+  api:
+    profiles: ["full"]
+    build:
+      context: ./backend
+    container_name: ij-api
+    env_file: ./backend/.env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-impulso}:${POSTGRES_PASSWORD:-impulso}@postgres:5432/${POSTGRES_DB:-impulso_jovem}?schema=public
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://minio:9000
+      SMTP_HOST: mailpit
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "3333:3333"
+
+  web:
+    profiles: ["full"]
+    build:
+      context: ./frontend
+      args:
+        API_INTERNAL_URL: http://api:3333
+    container_name: ij-web
+    environment:
+      API_INTERNAL_URL: http://api:3333
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
+volumes:
+  pg_data:
+  redis_data:
+  minio_data:
