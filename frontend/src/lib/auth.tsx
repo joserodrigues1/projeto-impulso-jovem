@@ -7,7 +7,8 @@ type User = {
   id: string;
   nomeCompleto: string;
   email: string;
-  tipoUsuario: "JOVEM" | "EMPRESA" | "MENTOR" | "ADMIN";
+  telefone: string;
+  tipoUsuario: "JOVEM" | "EMPRESA" | "MENTOR" | "ADMIN" | "USUARIO";
 };
 
 type AuthContextData = {
