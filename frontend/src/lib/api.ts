@@ -1,5 +1,7 @@
 export async function fetchApi(endpoint: string, options: RequestInit = {}) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333/api/v1";
+  // Use Next.js proxy instead of direct backend URL
+  // This avoids CORS issues and hardcoding the server IP in production.
+  const baseUrl = "/api-proxy";
   
   const headers = {
     "Content-Type": "application/json",
