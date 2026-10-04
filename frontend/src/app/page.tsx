@@ -45,7 +45,7 @@ export default function Home() {
           </div>
           
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight max-w-5xl mb-6 animate-in fade-in zoom-in-95 duration-700 leading-tight">
-            Descubra o seu verdadeiro <br className="hidden md:block" /> potencial com a <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-pink-400">IA</span> 🚀.
+            Descubra o seu verdadeiro <br className="hidden md:block" /> potencial com a <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-pink-400">IA</span>.
           </h1>
           
           <p className="text-lg md:text-xl text-gray-600 dark:text-zinc-400 max-w-2xl mb-10 leading-relaxed animate-in fade-in duration-1000 delay-150">
