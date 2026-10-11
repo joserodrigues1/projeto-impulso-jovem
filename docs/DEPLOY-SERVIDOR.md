@@ -179,4 +179,7 @@ Siga [`INTEGRACAO-N8N.md`](./INTEGRACAO-N8N.md) a partir do **passo 2** (credenc
     `API_URL` = `http://ij-api:3333/api/v1` (repita o `network connect` se o container do n8n for recriado);
   - **n8n em outro servidor:** a URL pública da API, ex.: `http://IP-DO-SERVIDOR:3333/api/v1`;
 - desative os fluxos antigos antes de ativar os novos (mesmos caminhos de webhook);
-- na Evolution, o webhook da instância aponta para `https://SEU-N8N/webhook/whatsapp-rh?token=SEU_TOKEN`.
+- na Evolution, o webhook da instância aponta para `https://SEU-N8N/webhook/whatsapp-rh?token=SEU_TOKEN` — ou, com a
+  Evolution e o n8n no mesmo servidor e o n8n atrás da Cloudflare, para o endereço interno
+  `http://NOME-DO-CONTAINER-DO-N8N:5678/webhook/whatsapp-rh` com `ACEITAR_REDE_INTERNA=true` no ⚙️ Configuração da
+  Recrutadora (sem token; veja `INTEGRACAO-N8N.md`, passo 4).

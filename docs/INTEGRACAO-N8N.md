@@ -165,7 +165,14 @@ aleatórios (o que pode levar o WhatsApp a banir o número).
 
 O fluxo **falha fechado**: com `WEBHOOK_TOKEN` vazio ou curto, token ausente ou diferente na URL, ou evento sem
 instância ou de outra instância, nada é processado e a Helena não responde (a execução para no filtro "Mensagem
-válida?"). Guarde o token num gerenciador de senhas e não o coloque em prints ou mensagens. Para trocar o token, mude
+válida?").
+
+**Alternativa sem token — `ACEITAR_REDE_INTERNA=true`.** Quando a Evolution e o n8n estão no mesmo servidor (mesma
+rede Docker) e o n8n só é acessível de fora pela **Cloudflare** (Tunnel ou proxy), dá para dispensar o token: a
+Evolution chama `http://NOME-DO-CONTAINER-DO-N8N:5678/webhook/whatsapp-rh` por dentro, e o fluxo aceita sem token só
+os eventos que **não** passaram pela Cloudflare (tudo o que vem por ela traz os headers `cf-connecting-ip`/`cf-ray`,
+que o visitante não consegue remover). A instância continua sendo conferida. Não ligue essa opção se o n8n estiver
+exposto direto na internet sem a Cloudflare na frente — aí use o token. Guarde o token num gerenciador de senhas e não o coloque em prints ou mensagens. Para trocar o token, mude
 nos dois lugares (n8n e Evolution) ao mesmo tempo.
 
 ### Demais campos
