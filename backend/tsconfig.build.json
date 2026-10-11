@@ -1,6 +1,8 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": { "rootDir": "./src" },
+  // Build de produção sempre completo: com "incremental", o nest apaga a dist (deleteOutDir)
+  // mas o .tsbuildinfo antigo faz o tsc pular arquivos "já compilados" — a dist sai incompleta.
+  "compilerOptions": { "rootDir": "./src", "incremental": false },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "test", "dist", "prisma", "**/*spec.ts"]
 }

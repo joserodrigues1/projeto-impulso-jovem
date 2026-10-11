@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
 import { UploadsController } from './uploads.controller';
-import { InfraModule } from '../../infra/infra.module';
 
+// StorageService e PrismaService vêm do InfraModule (global)
 @Module({
-  imports: [InfraModule],
   controllers: [UploadsController],
 })
 export class UploadsModule {}

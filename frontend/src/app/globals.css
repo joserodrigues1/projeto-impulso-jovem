@@ -4,12 +4,30 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Sistema visual do Impulso Jovem — ver docs/DESIGN.md.
+ * Marca: violeta elétrico + ciano + lima sobre "tinta" (quase preto levemente violeta).
+ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  /* As fontes vêm do next/font (layout.tsx) */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-bricolage), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-display);
+
+  /* Cores da marca (use: bg-marca, text-marca-clara, from-ciano, text-lima, bg-tinta…) */
+  --color-marca: var(--marca);
+  --color-marca-forte: var(--marca-forte);
+  --color-marca-clara: var(--marca-clara);
+  --color-marca-suave: var(--marca-suave);
+  --color-ciano: var(--ciano);
+  --color-lima: var(--lima);
+  --color-tinta: var(--tinta);
+  --color-tinta-2: var(--tinta-2);
+  --color-tinta-3: var(--tinta-3);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -46,78 +64,193 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Animações (use: animate-aurora, animate-faixa, animate-brilho, animate-flutuar, animate-cursor) */
+  --animate-aurora: aurora 18s ease-in-out infinite alternate;
+  --animate-faixa: faixa var(--duracao-faixa, 45s) linear infinite;
+  --animate-brilho: brilho 3.2s ease-in-out infinite;
+  --animate-flutuar: flutuar 7s ease-in-out infinite;
+  --animate-cursor: cursor 1s steps(2, start) infinite;
+  --animate-pulso-suave: pulso-suave 2.4s ease-in-out infinite;
+
+  @keyframes aurora {
+    0% {
+      transform: translate3d(-8%, -6%, 0) rotate(0deg) scale(1);
+    }
+    50% {
+      transform: translate3d(6%, 4%, 0) rotate(25deg) scale(1.12);
+    }
+    100% {
+      transform: translate3d(-4%, 8%, 0) rotate(-15deg) scale(0.95);
+    }
+  }
+  @keyframes faixa {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes brilho {
+    0%,
+    60% {
+      transform: translateX(-120%) skewX(-20deg);
+    }
+    100% {
+      transform: translateX(220%) skewX(-20deg);
+    }
+  }
+  @keyframes flutuar {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  @keyframes cursor {
+    to {
+      visibility: hidden;
+    }
+  }
+  @keyframes pulso-suave {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.45;
+    }
+  }
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Marca */
+  --marca: oklch(0.55 0.25 285); /* violeta elétrico — texto branco por cima: contraste ≥ 4,5:1 */
+  --marca-forte: oklch(0.47 0.24 285);
+  --marca-clara: oklch(0.74 0.16 285); /* texto da marca sobre fundo escuro */
+  --marca-suave: oklch(0.95 0.035 285);
+  --ciano: oklch(0.79 0.135 212);
+  --lima: oklch(0.9 0.2 127); /* só como fundo com texto escuro, ou texto sobre fundo escuro */
+  --tinta: oklch(0.145 0.022 282);
+  --tinta-2: oklch(0.19 0.026 282);
+  --tinta-3: oklch(0.24 0.03 282);
+
+  --background: oklch(0.985 0.004 285);
+  --foreground: oklch(0.21 0.03 282);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.21 0.03 282);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.21 0.03 282);
+  --primary: var(--marca);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.955 0.012 285);
+  --secondary-foreground: oklch(0.25 0.04 282);
+  --muted: oklch(0.955 0.01 285);
+  --muted-foreground: oklch(0.46 0.03 282);
+  --accent: oklch(0.94 0.03 285);
+  --accent-foreground: oklch(0.3 0.12 285);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --border: oklch(0.91 0.012 285);
+  --input: oklch(0.86 0.015 285);
+  --ring: oklch(0.6 0.22 285);
+  --chart-1: oklch(0.6 0.22 285);
+  --chart-2: oklch(0.72 0.13 215);
+  --chart-3: oklch(0.8 0.19 128);
+  --chart-4: oklch(0.78 0.16 70);
+  --chart-5: oklch(0.65 0.2 15);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.99 0.003 285);
+  --sidebar-foreground: oklch(0.21 0.03 282);
+  --sidebar-primary: var(--marca);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.95 0.025 285);
+  --sidebar-accent-foreground: oklch(0.3 0.12 285);
+  --sidebar-border: oklch(0.91 0.012 285);
+  --sidebar-ring: oklch(0.6 0.22 285);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: var(--tinta);
+  --foreground: oklch(0.97 0.006 285);
+  --card: var(--tinta-2);
+  --card-foreground: oklch(0.97 0.006 285);
+  --popover: oklch(0.2 0.026 282);
+  --popover-foreground: oklch(0.97 0.006 285);
+  --primary: oklch(0.56 0.25 285);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: var(--tinta-3);
+  --secondary-foreground: oklch(0.96 0.006 285);
+  --muted: oklch(0.23 0.025 282);
+  --muted-foreground: oklch(0.75 0.02 285);
+  --accent: oklch(0.27 0.05 285);
+  --accent-foreground: oklch(0.95 0.02 285);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.68 0.2 285);
+  --chart-1: oklch(0.7 0.19 285);
+  --chart-2: oklch(0.79 0.135 212);
+  --chart-3: oklch(0.88 0.2 127);
+  --chart-4: oklch(0.82 0.15 75);
+  --chart-5: oklch(0.72 0.18 15);
+  --sidebar: oklch(0.165 0.024 282);
+  --sidebar-foreground: oklch(0.97 0.006 285);
+  --sidebar-primary: oklch(0.56 0.25 285);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.25 0.04 285);
+  --sidebar-accent-foreground: oklch(0.96 0.01 285);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.68 0.2 285);
 }
 
 @layer base {
+  /* Controles nativos (lista do select, calendário, barras de rolagem) no tema certo — também antes do JS */
+  :root {
+    color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+  /*
+   * A lista aberta de um <select> é desenhada pelo navegador com o fundo do próprio campo: com o fundo translúcido
+   * dos campos no escuro, ela saía branca com texto claro (ilegível no Chrome/Edge do Windows). Opções opacas.
+   */
+  option,
+  optgroup {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+  }
+  /*
+   * Preenchimento automático: o navegador força um fundo próprio (amarelo-claro no Safari/iPhone, mesmo no tema
+   * escuro) que o CSS não consegue trocar. Uma sombra interna cobre esse fundo com a cor do campo, mantendo o anel
+   * de foco. Regras separadas: um seletor desconhecido invalidaria a lista inteira.
+   */
+  :root {
+    --campo-autofill: var(--card);
+  }
+  .dark {
+    --campo-autofill: color-mix(in oklab, var(--card), white 4%);
+  }
+  input:autofill,
+  textarea:autofill,
+  select:autofill {
+    box-shadow: inset 0 0 0 100vmax var(--campo-autofill), var(--tw-ring-shadow, 0 0 #0000) !important;
+    -webkit-text-fill-color: var(--foreground);
+    caret-color: var(--foreground);
+  }
+  input:-webkit-autofill,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    box-shadow: inset 0 0 0 100vmax var(--campo-autofill), var(--tw-ring-shadow, 0 0 #0000) !important;
+    -webkit-text-fill-color: var(--foreground);
+    caret-color: var(--foreground);
+  }
+  /* Fundo do <dialog>: valores literais, porque o ::backdrop não herda variáveis em navegadores mais antigos */
+  dialog::backdrop {
+    background-color: oklch(0.145 0.022 282 / 0.6);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
   * {
     @apply border-border outline-ring/50;
   }
@@ -126,5 +259,132 @@
   }
   html {
     @apply font-sans;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--marca) 35%, transparent);
+  }
+  /* Foco visível para quem navega pelo teclado (links e controles sem estilo próprio) */
+  a:focus-visible,
+  summary:focus-visible,
+  [role="button"]:focus-visible {
+    @apply rounded-md outline-2 outline-offset-2 outline-ring;
+  }
+}
+
+/* Texto em degradê da marca (violeta → ciano → lima) */
+@utility texto-gradiente {
+  background-image: linear-gradient(100deg, var(--marca-clara) 0%, var(--ciano) 55%, var(--lima) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Versão para fundo claro (mais escura, mantém contraste) */
+@utility texto-gradiente-claro {
+  background-image: linear-gradient(100deg, var(--marca-forte) 0%, oklch(0.55 0.15 230) 60%, oklch(0.55 0.16 150) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Fundo de grade sutil (seções "técnicas") */
+@utility fundo-grade {
+  background-image:
+    linear-gradient(to right, color-mix(in oklch, currentColor 7%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklch, currentColor 7%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Vidro: superfícies flutuantes (cabeçalho, cartões sobre a aurora) */
+@utility vidro {
+  background: color-mix(in oklch, var(--background) 70%, transparent);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+
+@layer components {
+  /* Granulado por cima de fundos em degradê (dá textura de "impresso") */
+  .granulado {
+    position: relative;
+    isolation: isolate;
+  }
+  .granulado::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Cartão com "holofote" que segue o cursor (as variáveis --x/--y vêm do CartaoHolofote) */
+  .holofote {
+    position: relative;
+    isolation: isolate;
+  }
+  .holofote::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    background: radial-gradient(
+      420px circle at var(--x, 50%) var(--y, 50%),
+      color-mix(in oklch, var(--marca) 16%, transparent),
+      transparent 65%
+    );
+  }
+  .holofote:hover::before,
+  .holofote:focus-within::before {
+    opacity: 1;
+  }
+
+  /* Borda em degradê animada (destaques) — o elemento precisa de borda transparente */
+  .borda-gradiente {
+    border: 1px solid transparent;
+    background:
+      linear-gradient(var(--card), var(--card)) padding-box,
+      conic-gradient(from var(--angulo, 0deg), var(--marca), var(--ciano), var(--lima), var(--marca)) border-box;
+  }
+}
+
+/* Quem pede menos movimento no sistema não vê animações nem rolagem suave */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Impressão (o currículo vira PDF pelo "Imprimir" do navegador): fundo branco e cores preservadas */
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #000;
+  }
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }

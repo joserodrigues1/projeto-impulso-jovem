@@ -2,24 +2,25 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install native build tools for node-gyp (required for argon2, etc)
+# Ferramentas de compilação para eventuais dependências com node-gyp. O hash de senha usa
+# hash-wasm (argon2id em WebAssembly), sem binário nativo — não adicione pacotes nativos.
 RUN apk add --no-cache python3 make g++
 
-# Install dependencies first (for caching)
+# Dependências primeiro (aproveita o cache). `npm ci` exige o package-lock.json atualizado.
 COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 RUN npm ci
 
-# Generate prisma client
+# Gera o Prisma Client
 RUN npx prisma generate
 
-# Copy the rest of the code
+# Copia o restante do código
 COPY . .
 
-# Build the NestJS application
+# Compila a aplicação NestJS
 RUN npm run build
 
-# Production stage
+# Imagem final
 FROM node:20-alpine
 
 WORKDIR /app
@@ -31,5 +32,5 @@ COPY --from=builder /app/prisma ./prisma
 
 EXPOSE 3333
 
-# Start the application
+# Sobe a API (o deploy roda `npx prisma db push` depois, dentro do container)
 CMD ["npm", "run", "start:prod"]

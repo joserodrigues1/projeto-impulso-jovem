@@ -2,17 +2,19 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  Inject,
   Injectable,
   UnauthorizedException,
-  Inject,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { TipoUsuario } from '@prisma/client';
+import type { Request } from 'express';
 import {
   IS_PUBLIC_KEY,
   RequisicaoAutenticada,
   ROLES_KEY,
+  UsuarioAutenticado,
 } from '../decorators/auth.decorators';
 
 export const ACCESS_COOKIE = 'ij_access';
@@ -25,11 +27,22 @@ export interface JwtPayload {
   email: string;
 }
 
-function extrairToken(req: RequisicaoAutenticada): string | undefined {
+/** Token de acesso: header `Authorization: Bearer` ou cookie HttpOnly. */
+export function extrairToken(req: Pick<Request, 'headers' | 'cookies'>): string | undefined {
   const header = req.headers.authorization;
-  if (header?.startsWith('Bearer ')) return header.slice(7);
-  const cookies = req.cookies as Record<string, string> | undefined;
-  return cookies?.[ACCESS_COOKIE];
+  if (header?.startsWith('Bearer ')) return header.slice(7).trim() || undefined;
+  const cookies = req.cookies as Record<string, unknown> | undefined;
+  const cookie = cookies?.[ACCESS_COOKIE];
+  return typeof cookie === 'string' && cookie ? cookie : undefined;
+}
+
+/** Valida o formato do payload — um token assinado com dados incompletos não vira sessão. */
+export function usuarioDoPayload(
+  p: Partial<JwtPayload> | null | undefined,
+): UsuarioAutenticado | null {
+  if (!p || typeof p.sub !== 'string' || !p.sub) return null;
+  if (p.tipo !== TipoUsuario.USUARIO && p.tipo !== TipoUsuario.ADMIN) return null;
+  return { id: p.sub, tipo: p.tipo, nome: String(p.nome ?? ''), email: String(p.email ?? '') };
 }
 
 /** Guard global: valida o JWT de acesso (cookie HttpOnly ou header Bearer). */
@@ -41,6 +54,7 @@ export class JwtAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
+    if (ctx.getType() !== 'http') return true;
     const req = ctx.switchToHttp().getRequest<RequisicaoAutenticada>();
     const publico = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       ctx.getHandler(),
@@ -50,14 +64,17 @@ export class JwtAuthGuard implements CanActivate {
     const token = extrairToken(req);
     if (token) {
       try {
-        const p = await this.jwt.verifyAsync<JwtPayload>(token);
-        req.user = { id: p.sub, tipo: p.tipo, nome: p.nome, email: p.email };
-      } catch {
-        if (!publico) throw new UnauthorizedException('Sessão expirada ou inválida');
+        const usuario = usuarioDoPayload(await this.jwt.verifyAsync<JwtPayload>(token));
+        if (usuario) req.user = usuario;
+        else if (!publico)
+          throw new UnauthorizedException('Sessão inválida. Faça login novamente.');
+      } catch (e) {
+        if (e instanceof UnauthorizedException) throw e;
+        if (!publico) throw new UnauthorizedException('Sua sessão expirou. Faça login novamente.');
       }
     }
 
-    if (!publico && !req.user) throw new UnauthorizedException('Autenticação necessária');
+    if (!publico && !req.user) throw new UnauthorizedException('Faça login para continuar.');
     return true;
   }
 }
@@ -74,9 +91,9 @@ export class RolesGuard implements CanActivate {
     ]);
     if (!tipos?.length) return true;
     const { user } = ctx.switchToHttp().getRequest<RequisicaoAutenticada>();
-    if (!user) throw new UnauthorizedException('Autenticação necessária');
+    if (!user) throw new UnauthorizedException('Faça login para continuar.');
     if (!tipos.includes(user.tipo)) {
-      throw new ForbiddenException('Você não tem permissão para acessar este recurso');
+      throw new ForbiddenException('Você não tem permissão para acessar este recurso.');
     }
     return true;
   }

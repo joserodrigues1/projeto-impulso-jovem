@@ -16,6 +16,9 @@ import { env } from '../config/env';
  *   public/usuarios/{usuarioId}/...  → leitura pública (fotos, logos)
  *   public/cursos/...                → capas de cursos
  *   private/usuarios/{usuarioId}/... → acesso apenas via URL assinada (currículos)
+ *
+ * O armazenamento é opcional no servidor (o MinIO pode não estar rodando): `enviar` lança
+ * erro e quem chama decide a mensagem; remoções apenas registram aviso.
  */
 @Injectable()
 export class StorageService {
@@ -27,6 +30,9 @@ export class StorageService {
     endpoint: env.S3_ENDPOINT || undefined,
     forcePathStyle: env.S3_FORCE_PATH_STYLE,
     credentials: { accessKeyId: env.S3_ACCESS_KEY, secretAccessKey: env.S3_SECRET_KEY },
+    // Sem o MinIO no ar, falha rápido em vez de segurar a requisição
+    maxAttempts: 2,
+    requestHandler: { connectionTimeout: 3000, requestTimeout: 20000 },
   });
 
   /** Cliente usado só para assinar URLs com o host público (acessível pelo navegador). */
@@ -68,7 +74,7 @@ export class StorageService {
         Bucket: this.bucket,
         Key: chave,
         ResponseContentDisposition: nomeArquivo
-          ? `inline; filename="${nomeArquivo}"`
+          ? `inline; filename="${nomeArquivo.replace(/["\\\r\n]/g, '')}"`
           : undefined,
       }),
       { expiresIn: expiraSegundos },
@@ -95,7 +101,7 @@ export class StorageService {
             ContinuationToken: token,
           }),
         );
-        const objetos = (lista.Contents ?? []).map((o) => ({ Key: o.Key! }));
+        const objetos = (lista.Contents ?? []).flatMap((o) => (o.Key ? [{ Key: o.Key }] : []));
         if (objetos.length) {
           await this.s3.send(
             new DeleteObjectsCommand({ Bucket: this.bucket, Delete: { Objects: objetos } }),

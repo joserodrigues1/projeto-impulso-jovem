@@ -1,0 +1,10 @@
+# O Dockerfile faz "COPY . ." depois do npm ci: nada local pode ir junto para a imagem.
+node_modules
+.next
+out
+coverage
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+*.log

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { descreverErro } from '../common/logger/descrever-erro';
 import { PrismaService } from './prisma.service';
 
 export interface RegistroAuditoria {
@@ -21,7 +22,7 @@ export class AuditoriaService {
     try {
       await this.prisma.logAuditoria.create({ data: { ...r, usuarioId: r.usuarioId ?? null } });
     } catch (e) {
-      this.logger.warn(`Falha ao registrar auditoria (${r.acao}): ${(e as Error).message}`);
+      this.logger.warn(`Falha ao registrar auditoria (${r.acao}): ${descreverErro(e)}`);
     }
   }
 }

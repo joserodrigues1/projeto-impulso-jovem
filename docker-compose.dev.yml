@@ -1,0 +1,18 @@
+# Ajustes só para desenvolvimento local — o servidor NÃO usa este arquivo.
+# Uso: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres redis mailpit
+#
+# Expõe o Redis apenas em 127.0.0.1 (a API roda fora do Docker no dev) e sobe o Mailpit
+# para ver os e-mails (recuperação de senha, boas-vindas) em http://localhost:8025.
+
+services:
+  redis:
+    ports:
+      - "127.0.0.1:6379:6379"
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    container_name: ij-mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"

@@ -23,6 +23,28 @@ enum StatusConta {
   BLOQUEADO
 }
 
+enum StatusSessaoEntrevista {
+  /// Conversa em curso no WhatsApp
+  EM_ANDAMENTO
+  /// Encerrada (pela IA, pelo usuário ou por inatividade) — aguardando o relatório
+  FINALIZADA
+  /// Relatório gerado e salvo em EntrevistaBot
+  ANALISADA
+  /// Encerrada sem conteúdo suficiente para gerar relatório
+  CANCELADA
+}
+
+enum AutorMensagem {
+  CANDIDATO
+  RECRUTADORA
+}
+
+enum TipoMensagem {
+  TEXTO
+  /// Áudio do WhatsApp — `conteudo` guarda a transcrição
+  AUDIO
+}
+
 // ───────────────────────── Núcleo: usuários ─────────────────────────
 
 model Usuario {
@@ -43,6 +65,7 @@ model Usuario {
   perfil            Perfil?
   curriculosGerados CurriculoGerado[]
   entrevistas       EntrevistaBot[]
+  sessoesEntrevista SessaoEntrevista[]
   refreshTokens     RefreshToken[]
   tokensRecuperacao TokenRecuperacaoSenha[]
   consentimentos    ConsentimentoLgpd[]
@@ -91,11 +114,14 @@ model Experiencia {
 model CurriculoGerado {
   id            String   @id @default(uuid()) @db.Uuid
   usuarioId     String   @map("usuario_id") @db.Uuid
-  /// Snapshot dos dados do currículo (já refinados pela IA, quando disponível).
-  /// O PDF é renderizado sob demanda a partir deste conteúdo.
+  /// Snapshot dos dados do currículo (ConteudoCurriculo v2 — ver curriculo-conteudo.ts).
+  /// O layout é renderizado no frontend a partir deste conteúdo (impressão/PDF pelo navegador).
   conteudo      Json
   refinadoPorIa Boolean  @default(false) @map("refinado_por_ia")
+  /// Nome dado pelo usuário a esta versão (ex.: "Currículo — Administrativo")
+  titulo        String?  @db.VarChar(120)
   geradoEm      DateTime @default(now()) @map("gerado_em")
+  atualizadoEm  DateTime @default(now()) @updatedAt @map("atualizado_em")
 
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
@@ -109,18 +135,66 @@ model CurriculoGerado {
 model EntrevistaBot {
   id               String   @id @default(uuid()) @db.Uuid
   usuarioId        String   @map("usuario_id") @db.Uuid
+  /// Sessão de conversa que originou o relatório (nulo em registros antigos).
+  /// Sem @unique de propósito: o deploy usa `prisma db push`, que exige confirmação
+  /// para novas restrições únicas. A unicidade é garantida no serviço.
+  sessaoId         String?  @map("sessao_id") @db.Uuid
   cargoAlvo        String   @map("cargo_alvo") @db.VarChar(150)
   empresaAlvo      String?  @map("empresa_alvo") @db.VarChar(150)
+  /// Versão em texto (uma linha por item) — mantida para compatibilidade
   pontosFortes     String   @map("pontos_fortes") @db.Text
   pontosMelhoria   String   @map("pontos_melhoria") @db.Text
   dicasComunicacao String   @map("dicas_comunicacao") @db.Text
+  /// Nota geral de 0 a 10 atribuída pela IA
+  notaGeral        Float?   @map("nota_geral")
+  /// Relatório estruturado (RelatorioEntrevista v1 — ver relatorio-entrevista.ts)
+  relatorio        Json?
   dataRealizacao   DateTime @default(now()) @map("data_realizacao")
   criadoEm         DateTime @default(now()) @map("criado_em")
 
-  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuario Usuario           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  sessao  SessaoEntrevista? @relation(fields: [sessaoId], references: [id], onDelete: SetNull)
 
   @@index([usuarioId, dataRealizacao])
+  @@index([sessaoId])
   @@map("entrevistas_bot")
+}
+
+/// Uma simulação de entrevista no WhatsApp (do primeiro "oi" até o encerramento).
+model SessaoEntrevista {
+  id                String                 @id @default(uuid()) @db.Uuid
+  usuarioId         String                 @map("usuario_id") @db.Uuid
+  status            StatusSessaoEntrevista @default(EM_ANDAMENTO)
+  cargoAlvo         String?                @map("cargo_alvo") @db.VarChar(150)
+  empresaAlvo       String?                @map("empresa_alvo") @db.VarChar(150)
+  /// CONCLUIDA | SOLICITADA_USUARIO | INATIVIDADE
+  motivoFinalizacao String?                @map("motivo_finalizacao") @db.VarChar(30)
+  iniciadaEm        DateTime               @default(now()) @map("iniciada_em")
+  ultimaMensagemEm  DateTime               @default(now()) @map("ultima_mensagem_em")
+  finalizadaEm      DateTime?              @map("finalizada_em")
+
+  usuario     Usuario              @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  mensagens   MensagemEntrevista[]
+  entrevistas EntrevistaBot[]
+
+  @@index([usuarioId, status])
+  @@index([status, ultimaMensagemEm])
+  @@map("sessoes_entrevista")
+}
+
+/// Mensagens trocadas na simulação — base do relatório gerado pela IA.
+model MensagemEntrevista {
+  id       String        @id @default(uuid()) @db.Uuid
+  sessaoId String        @map("sessao_id") @db.Uuid
+  autor    AutorMensagem
+  tipo     TipoMensagem  @default(TEXTO)
+  conteudo String        @db.Text
+  criadoEm DateTime      @default(now()) @map("criado_em")
+
+  sessao SessaoEntrevista @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+
+  @@index([sessaoId, criadoEm])
+  @@map("mensagens_entrevista")
 }
 
 // ───────────────────────── Segurança e LGPD ─────────────────────────

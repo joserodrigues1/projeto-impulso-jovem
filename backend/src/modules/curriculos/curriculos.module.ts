@@ -4,6 +4,7 @@ import { CurriculosService } from './curriculos.service';
 
 @Module({
   controllers: [CurriculosController],
-  providers: [CurriculosService]
+  providers: [CurriculosService],
+  exports: [CurriculosService],
 })
 export class CurriculosModule {}

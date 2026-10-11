@@ -28,3 +28,12 @@ Thumbs.db
 # Testes
 playwright-report/
 test-results/
+
+# Fluxos do n8n e materiais locais (importados manualmente no n8n)
+n8n-workflows/
+
+# Ajustes do compose só de um servidor (ex.: rede do n8n, proxy na frente) — não versionar
+docker-compose.override.yml
+
+# Configurações locais de ferramentas de IA
+.claude/

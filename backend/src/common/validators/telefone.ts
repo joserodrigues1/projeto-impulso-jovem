@@ -33,8 +33,14 @@ export function variantesTelefone(normalizado: string): string[] {
   return [normalizado];
 }
 
-/** Formata para exibição: "5561999999999" → "(61) 99999-9999". */
-export function formatarTelefone(normalizado: string): string {
+/**
+ * Formata para exibição: "5561999999999" → "(61) 99999-9999".
+ * Aceita também números ainda não normalizados (cadastros antigos); se não for um
+ * telefone válido, devolve o valor original.
+ */
+export function formatarTelefone(telefone: string): string {
+  const normalizado = normalizarTelefone(telefone);
+  if (!normalizado) return telefone;
   const ddd = normalizado.slice(2, 4);
   const numero = normalizado.slice(4);
   const corte = numero.length - 4;

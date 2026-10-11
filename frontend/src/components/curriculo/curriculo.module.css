@@ -1,0 +1,379 @@
+/*
+ * Modelo visual do currículo (folha A4) e regras de impressão.
+ * Medidas em mm/pt para o PDF sair igual à tela. O currículo é sempre claro, mesmo no dark mode do app.
+ */
+
+/* ───────────────────────── Folha ───────────────────────── */
+
+.folha {
+  --cv-azul: #2b5576;
+  --cv-azul-claro: #5ba4d0;
+  --cv-cinza: #eef1f4;
+  --cv-texto: #3d4f5f;
+  --cv-suave: #5f7182;
+
+  position: relative;
+  box-sizing: border-box;
+  width: 210mm;
+  min-height: 297mm;
+  background: #fff;
+  color: var(--cv-texto);
+  color-scheme: light;
+  font-family: var(--cv-fonte-texto), "Source Sans 3", "Segoe UI", Arial, sans-serif;
+  font-size: 10pt;
+  line-height: 1.4;
+  text-align: left;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.folha * {
+  box-sizing: border-box;
+}
+
+/* Faixas onduladas */
+.onda {
+  position: absolute;
+  left: 0;
+  z-index: 0;
+  display: block;
+  width: 210mm;
+  pointer-events: none;
+}
+
+.ondaTopo {
+  top: 0;
+  height: 30mm;
+}
+
+.ondaRodape {
+  bottom: 0;
+  height: 30mm;
+}
+
+/*
+ * A tabela só serve para a impressão: o <thead>/<tfoot> se repetem em cada página,
+ * reservando espaço no topo e embaixo (onde fica a onda do rodapé) mesmo com @page margin 0.
+ */
+.estrutura {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.estrutura td {
+  padding: 0;
+  vertical-align: top;
+}
+
+.respiroTopo {
+  height: 12mm;
+}
+
+.respiroRodape {
+  height: 31mm;
+}
+
+.grade {
+  display: grid;
+  grid-template-columns: 80mm minmax(0, 1fr);
+  column-gap: 10mm;
+  padding-top: 11mm;
+}
+
+/* ───────────────────────── Coluna lateral ───────────────────────── */
+
+.lateral {
+  min-width: 0;
+}
+
+.moldura {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60mm;
+  height: 60mm;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 2.2mm solid var(--cv-azul);
+  /* formato levemente orgânico, como no modelo */
+  border-radius: 52% 48% 47% 53% / 50% 54% 46% 50%;
+  background: var(--cv-cinza);
+  break-inside: avoid;
+}
+
+.foto {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.iniciais {
+  font-family: var(--cv-fonte-titulo), "Montserrat", Arial, sans-serif;
+  font-size: 30pt;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--cv-azul);
+}
+
+.painel {
+  margin-top: 10mm;
+  padding: 8mm 7mm 9mm 14mm;
+  border-radius: 0 10mm 10mm 0;
+  background: var(--cv-cinza);
+}
+
+.painel .secao:first-child {
+  margin-top: 0;
+}
+
+.painel .titulo::after {
+  width: 13mm;
+}
+
+/* ───────────────────────── Coluna principal ───────────────────────── */
+
+.principal {
+  min-width: 0;
+  padding: 3mm 12mm 0 0;
+}
+
+.nome {
+  margin: 0;
+  font-family: var(--cv-fonte-titulo), "Montserrat", Arial, sans-serif;
+  font-size: 28pt;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--cv-azul);
+  overflow-wrap: anywhere;
+}
+
+.nomeMedio {
+  font-size: 23pt;
+}
+
+.nomeLongo {
+  font-size: 19pt;
+}
+
+.traco {
+  width: 37mm;
+  height: 0.7mm;
+  margin: 4mm 0 3.5mm;
+  background: var(--cv-azul);
+}
+
+/* Cargo desejado: discreto, logo abaixo do traço */
+.objetivo {
+  margin: 0 0 3mm;
+  font-size: 9.5pt;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cv-suave);
+}
+
+.contatos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2mm 5mm;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 9pt;
+}
+
+.contato {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.6mm;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.contato a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.iconeContato {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 5mm;
+  height: 5mm;
+  border-radius: 50%;
+  background: var(--cv-azul);
+  color: #fff;
+}
+
+.iconeContato svg {
+  width: 2.8mm;
+  height: 2.8mm;
+}
+
+/* ───────────────────────── Seções ───────────────────────── */
+
+.secao {
+  margin-top: 8mm;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 11.5pt;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--cv-azul-claro);
+  break-after: avoid;
+}
+
+.titulo::after {
+  content: "";
+  display: block;
+  width: 37mm;
+  height: 0.6mm;
+  margin-top: 2.4mm;
+  background: var(--cv-azul);
+}
+
+.paragrafo {
+  margin: 4mm 0 0;
+  font-size: 9.8pt;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.item {
+  margin-top: 4.5mm;
+  break-inside: avoid;
+}
+
+.itemTitulo {
+  margin: 0;
+  font-size: 11.5pt;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: var(--cv-azul);
+}
+
+.instituicao {
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.itemSub {
+  margin: 0.8mm 0 0;
+  font-size: 9.6pt;
+  letter-spacing: 0.06em;
+  color: var(--cv-suave);
+}
+
+.marcadores {
+  margin: 2mm 0 0;
+  padding-left: 4.5mm;
+  list-style: disc;
+  font-size: 9.3pt;
+  line-height: 1.4;
+}
+
+.marcadores li {
+  margin-top: 0.6mm;
+}
+
+.marcadores li::marker {
+  color: var(--cv-azul);
+}
+
+/* Listas da coluna lateral */
+.lista {
+  margin: 4mm 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 9.6pt;
+  line-height: 1.35;
+}
+
+.lista li {
+  position: relative;
+  margin-top: 1.3mm;
+  padding-left: 5mm;
+  break-inside: avoid;
+}
+
+.lista li::before {
+  content: "";
+  position: absolute;
+  top: 0.5em;
+  left: 0.6mm;
+  width: 1.7mm;
+  height: 1.7mm;
+  border-radius: 50%;
+  background: var(--cv-azul);
+}
+
+.listaPilula li::before {
+  width: 2.6mm;
+  height: 1.4mm;
+  border-radius: 1mm;
+  transform: rotate(-28deg);
+}
+
+.listaAnel li::before {
+  border: 0.5mm solid var(--cv-azul);
+  background: transparent;
+}
+
+/* ───────────────────────── Tela x impressão ───────────────────────── */
+
+/* Cópia usada só na impressão (fica num portal direto no <body>). */
+.areaImpressao {
+  display: none;
+}
+
+@media print {
+  /* Folha A4 sem margem: as faixas onduladas encostam na borda do papel */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  /* Classe aplicada no <body> enquanto a página do currículo está aberta */
+  /* O <body> do app é flex com altura mínima: na impressão vira bloco simples, para paginar sem surpresas */
+  .corpoImpressao {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .corpoImpressao > :not(.areaImpressao) {
+    display: none !important;
+  }
+
+  .areaImpressao {
+    display: block !important;
+  }
+
+  .folha {
+    min-height: 0;
+    box-shadow: none !important;
+  }
+
+  /* A onda do rodapé se repete no pé de cada página */
+  .ondaRodape {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+  }
+}

@@ -10,7 +10,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-impulso}
       POSTGRES_DB: ${POSTGRES_DB:-impulso_jovem}
     ports:
-      - "5433:5432"
+      # Só acessível de dentro do servidor (a API usa a rede do Docker). Para acessar de fora, use um túnel SSH.
+      - "127.0.0.1:5433:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
@@ -78,6 +79,7 @@ services:
     build:
       context: ./backend
     container_name: ij-api
+    restart: unless-stopped
     env_file: ./backend/.env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-impulso}:${POSTGRES_PASSWORD:-impulso}@postgres:5432/${POSTGRES_DB:-impulso_jovem}?schema=public
@@ -99,6 +101,7 @@ services:
       args:
         API_INTERNAL_URL: http://api:3333
     container_name: ij-web
+    restart: unless-stopped
     environment:
       API_INTERNAL_URL: http://api:3333
     depends_on:

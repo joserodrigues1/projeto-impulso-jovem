@@ -25,10 +25,12 @@ ENV NODE_ENV production
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+# Envolve o server.js do standalone para repassar o IP real do usuário à API (ver o arquivo)
+COPY --from=builder /app/servidor-producao.js ./
 
 EXPOSE 3000
 
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["node", "server.js"]
+CMD ["node", "servidor-producao.js"]
