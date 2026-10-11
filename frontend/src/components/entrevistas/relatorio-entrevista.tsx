@@ -139,10 +139,10 @@ function Numero({ valor, destaque }: { valor: number; destaque: Destaque }) {
 }
 
 /** O que a pessoa disse na conversa, num balão como o do WhatsApp. */
-function Evidencia({ texto }: { texto: string }) {
+function Evidencia({ texto, rotulo = "Você disse:" }: { texto: string; rotulo?: string }) {
   return (
     <blockquote className="relative mt-3 rounded-2xl rounded-tl-md border border-border bg-muted/70 px-3.5 py-2.5 text-sm text-foreground/90 dark:bg-white/[0.04]">
-      <span className="mb-0.5 block text-xs font-semibold text-muted-foreground">Você disse: </span>
+      <span className="mb-0.5 block text-xs font-semibold text-muted-foreground">{rotulo} </span>
       <span className="italic">“{semAspas(texto)}”</span>
     </blockquote>
   );
@@ -175,10 +175,18 @@ interface RelatorioEntrevistaViewProps {
   entrevista: EntrevistaDetalhe;
   /** Link do WhatsApp da IA (config pública); sem ele, os botões de treino ficam ocultos. */
   whatsappLink: string | null;
+  /**
+   * "administracao": o relatório aparece dentro da tela da administração — o título vira h2 (a página já tem
+   * o seu h1) e o plano de ação é só leitura (a lista de "feito" é do participante, não de quem administra).
+   */
+  modo?: "participante" | "administracao";
 }
 
 /** Dashboard do relatório de uma simulação de entrevista. */
-export function RelatorioEntrevistaView({ entrevista, whatsappLink }: RelatorioEntrevistaViewProps) {
+export function RelatorioEntrevistaView({ entrevista, whatsappLink, modo = "participante" }: RelatorioEntrevistaViewProps) {
+  const administracao = modo === "administracao";
+  const Titulo = administracao ? "h2" : "h1";
+  const rotuloEvidencia = administracao ? "O participante disse:" : "Você disse:";
   const r = entrevista.relatorio;
   const legado = r.versao === 0;
   // Formato antigo: sem nota nem competências (só as listas de texto)
@@ -231,12 +239,12 @@ export function RelatorioEntrevistaView({ entrevista, whatsappLink }: RelatorioE
               <span aria-hidden="true" className="size-1.5 rounded-full bg-lima" />
               Relatório da simulação
             </p>
-            <h1
+            <Titulo
               id="relatorio-titulo"
               className="mt-3 font-display text-3xl leading-[1.08] font-bold tracking-tight break-words text-foreground sm:text-4xl"
             >
               {entrevista.cargoAlvo}
-            </h1>
+            </Titulo>
             <div className="mt-3 flex flex-wrap gap-2 text-sm text-muted-foreground">
               {entrevista.empresaAlvo && (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1 dark:bg-white/[0.03]">
@@ -276,8 +284,8 @@ export function RelatorioEntrevistaView({ entrevista, whatsappLink }: RelatorioE
               <p className="mt-5 flex items-start gap-2 rounded-2xl bg-muted/70 p-3.5 text-sm text-muted-foreground">
                 <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
                 <span>
-                  Relatório no formato antigo: ele foi gerado antes de termos notas e competências. Faça uma nova
-                  simulação para receber o relatório completo.
+                  Relatório no formato antigo: ele foi gerado antes de termos notas e competências.
+                  {!administracao && " Faça uma nova simulação para receber o relatório completo."}
                 </span>
               </p>
             )}
@@ -317,7 +325,7 @@ export function RelatorioEntrevistaView({ entrevista, whatsappLink }: RelatorioE
                 {pontosFortes.map((p, i) => (
                   <CartaoPonto key={i} numero={i + 1} destaque="lima">
                     <TextoItem titulo={p.titulo} descricao={p.descricao} />
-                    {p.evidencia && <Evidencia texto={p.evidencia} />}
+                    {p.evidencia && <Evidencia texto={p.evidencia} rotulo={rotuloEvidencia} />}
                   </CartaoPonto>
                 ))}
               </ol>
@@ -336,7 +344,7 @@ export function RelatorioEntrevistaView({ entrevista, whatsappLink }: RelatorioE
                 {pontosMelhoria.map((p, i) => (
                   <CartaoPonto key={i} numero={i + 1} destaque="ambar">
                     <TextoItem titulo={p.titulo} descricao={p.descricao} />
-                    {p.evidencia && <Evidencia texto={p.evidencia} />}
+                    {p.evidencia && <Evidencia texto={p.evidencia} rotulo={rotuloEvidencia} />}
                     {p.comoMelhorar && (
                       <div className="mt-3 flex gap-2.5 rounded-xl border border-chart-4/35 bg-chart-4/10 p-3 dark:border-chart-4/20 dark:bg-chart-4/[0.07]">
                         <Lightbulb
@@ -363,11 +371,15 @@ export function RelatorioEntrevistaView({ entrevista, whatsappLink }: RelatorioE
             <Secao
               id="secao-plano-acao"
               titulo="Plano de ação"
-              descricao="Seus próximos passos. Marque o que já fez — fica salvo neste aparelho."
+              descricao={
+                administracao
+                  ? "Os próximos passos sugeridos ao participante."
+                  : "Seus próximos passos. Marque o que já fez — fica salvo neste aparelho."
+              }
               icone={ListChecks}
               destaque="ciano"
             >
-              <PlanoDeAcao entrevistaId={entrevista.id} passos={planoDeAcao} />
+              <PlanoDeAcao entrevistaId={entrevista.id} passos={planoDeAcao} somenteLeitura={administracao} />
             </Secao>
           )}
 

@@ -169,7 +169,9 @@ export class AuthService {
     await this.prisma.refreshToken.deleteMany({
       where: { usuarioId: usuario.id, expiraEm: { lt: new Date() } },
     });
-    return this.emitirSessao(atualizado, meta);
+    const sessao = await this.emitirSessao(atualizado, meta);
+    await this.auditoria.registrar({ usuarioId: usuario.id, acao: 'LOGIN_SUCESSO', ip: meta.ip });
+    return sessao;
   }
 
   /**

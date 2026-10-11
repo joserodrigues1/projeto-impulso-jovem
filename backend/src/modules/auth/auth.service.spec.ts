@@ -1,6 +1,7 @@
-import { Logger, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Logger, UnauthorizedException } from '@nestjs/common';
 import type { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'node:crypto';
+import { hashSenha } from '../../common/crypto/senha';
 import type { AuditoriaService } from '../../infra/auditoria.service';
 import type { MailService } from '../../infra/mail.service';
 import type { PrismaService } from '../../infra/prisma.service';
@@ -156,5 +157,95 @@ describe('AuthService.renovar — tolerância de 15 s', () => {
     await expect(auth.renovar(nova.refreshToken, {})).resolves.toMatchObject({
       usuario: { id: USUARIO.id },
     });
+  });
+});
+
+describe('AuthService.login — auditoria', () => {
+  const SENHA = 'Senha-de-teste-123';
+  const META = { ip: '177.37.10.20', userAgent: 'jest' };
+  let senhaHash: string;
+  beforeAll(async () => {
+    senhaHash = await hashSenha(SENHA);
+  });
+
+  function montarLogin(conta: Partial<typeof USUARIO> | null = {}) {
+    const tokens = new TokensFalsos();
+    const usuario = conta ? { ...USUARIO, senhaHash, ...conta } : null;
+    const prisma = {
+      refreshToken: tokens.delegate,
+      usuario: {
+        findUnique: jest.fn().mockResolvedValue(usuario),
+        update: jest.fn().mockResolvedValue(usuario),
+      },
+    };
+    const auditoria = { registrar: jest.fn().mockResolvedValue(undefined) };
+    const bloqueio = {
+      segundosBloqueado: jest.fn().mockResolvedValue(0),
+      registrarFalha: jest.fn().mockResolvedValue(false),
+      limparIp: jest.fn().mockResolvedValue(undefined),
+    };
+    const auth = new AuthService(
+      prisma as unknown as PrismaService,
+      { signAsync: jest.fn().mockResolvedValue('jwt') } as unknown as JwtService,
+      {} as MailService,
+      auditoria as unknown as AuditoriaService,
+      bloqueio as unknown as BloqueioLoginService,
+    );
+    return { auth, auditoria, prisma, tokens };
+  }
+
+  const acoes = (auditoria: { registrar: jest.Mock }) =>
+    auditoria.registrar.mock.calls.map(([r]: [{ acao: string }]) => r.acao);
+
+  it('login certo registra LOGIN_SUCESSO com o IP, depois de abrir a sessão', async () => {
+    const { auth, auditoria, tokens } = montarLogin();
+
+    const sessao = await auth.login({ email: USUARIO.email, senha: SENHA }, META);
+
+    expect(sessao.usuario.id).toBe(USUARIO.id);
+    expect(auditoria.registrar).toHaveBeenCalledTimes(1);
+    expect(auditoria.registrar).toHaveBeenCalledWith({
+      usuarioId: USUARIO.id,
+      acao: 'LOGIN_SUCESSO',
+      ip: META.ip,
+    });
+    // Só registra quando a sessão foi de fato criada
+    expect(tokens.delegate.create.mock.invocationCallOrder[0]).toBeLessThan(
+      auditoria.registrar.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('senha errada registra só LOGIN_FALHA', async () => {
+    const { auth, auditoria } = montarLogin();
+
+    await expect(
+      auth.login({ email: USUARIO.email, senha: 'outra-senha' }, META),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+
+    expect(acoes(auditoria)).toEqual(['LOGIN_FALHA']);
+  });
+
+  it('conta bloqueada (mesmo com a senha certa) ou e-mail inexistente não registram LOGIN_SUCESSO', async () => {
+    const bloqueada = montarLogin({ statusConta: 'BLOQUEADO' });
+    await expect(
+      bloqueada.auth.login({ email: USUARIO.email, senha: SENHA }, META),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(acoes(bloqueada.auditoria)).not.toContain('LOGIN_SUCESSO');
+
+    const inexistente = montarLogin(null);
+    await expect(
+      inexistente.auth.login({ email: 'ninguem@exemplo.com', senha: SENHA }, META),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(inexistente.auditoria.registrar).not.toHaveBeenCalled();
+  });
+
+  it('falha ao abrir a sessão: nada de LOGIN_SUCESSO', async () => {
+    const { auth, auditoria, tokens } = montarLogin();
+    tokens.delegate.create.mockRejectedValueOnce(new Error('banco fora do ar'));
+
+    await expect(auth.login({ email: USUARIO.email, senha: SENHA }, META)).rejects.toThrow(
+      'banco fora do ar',
+    );
+    expect(acoes(auditoria)).not.toContain('LOGIN_SUCESSO');
   });
 });

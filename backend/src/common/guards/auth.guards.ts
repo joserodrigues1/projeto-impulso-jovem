@@ -19,6 +19,8 @@ import {
 
 export const ACCESS_COOKIE = 'ij_access';
 export const REFRESH_COOKIE = 'ij_refresh';
+/** Resposta 403 do controle de acesso por papéis (também usada pelo AdminAtivoGuard). */
+export const MENSAGEM_SEM_PERMISSAO = 'Você não tem permissão para acessar este recurso.';
 
 export interface JwtPayload {
   sub: string;
@@ -93,7 +95,7 @@ export class RolesGuard implements CanActivate {
     const { user } = ctx.switchToHttp().getRequest<RequisicaoAutenticada>();
     if (!user) throw new UnauthorizedException('Faça login para continuar.');
     if (!tipos.includes(user.tipo)) {
-      throw new ForbiddenException('Você não tem permissão para acessar este recurso.');
+      throw new ForbiddenException(MENSAGEM_SEM_PERMISSAO);
     }
     return true;
   }

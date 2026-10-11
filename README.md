@@ -99,17 +99,15 @@ Cada push na `main` dispara o GitHub Actions no runner do servidor (`.github/wor
 
 ### E-mail no servidor (recuperação de senha)
 
-"Esqueci minha senha", boas-vindas e o aviso de senha alterada dependem de um SMTP de verdade. No
-`docker-compose.yml`, o serviço `api` define `SMTP_HOST: mailpit` no bloco `environment:` — isso **tem prioridade** sobre
-o `backend/.env`, e o Mailpit não sobe no servidor. Resultado: o site responde "você vai receber um link", mas o e-mail
-não sai (só aparece "Falha ao enviar e-mail" no log da API). Para ligar o envio:
+"Esqueci minha senha", boas-vindas e o aviso de senha alterada dependem de um SMTP de verdade (sem ele, o site responde
+normalmente e só aparece "Falha ao enviar e-mail" no log da API). No servidor:
 
-1. Configure no `backend/.env` do servidor `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` e `MAIL_FROM` do seu provedor de
-   e-mail transacional (porta 465 usa TLS direto; 587 usa STARTTLS).
-2. Faça o `SMTP_HOST` do provedor valer no container: troque, no `docker-compose.yml`, a linha `SMTP_HOST: mailpit` por
-   `SMTP_HOST: ${SMTP_HOST:-mailpit}` e defina `SMTP_HOST=smtp.seu-provedor.com` no `.env` da **raiz** (ou apague a
-   linha para valer o do `backend/.env`). Com o `S3_ENDPOINT` vale o mesmo, se um dia houver storage externo.
-3. Rode `docker compose --profile full up -d` e teste a recuperação de senha com uma conta sua.
+1. Crie uma conta num provedor de e-mail transacional e verifique o domínio do remetente (registros SPF/DKIM no DNS).
+   Para começar sem custo: **Resend** (100 e-mails por dia, 3.000 por mês; configura o DNS da Cloudflare sozinho).
+2. Rode `bash scripts/configurar-email.sh` — ele pede o servidor SMTP (padrão da Resend), a chave (sem mostrar na tela)
+   e o remetente, grava no `backend/.env`, reinicia a API e manda um e-mail de teste.
+
+O `SMTP_HOST` vem do `backend/.env` (o compose não o sobrepõe mais). Porta 465 usa TLS direto; 587, STARTTLS.
 
 ## Observações
 

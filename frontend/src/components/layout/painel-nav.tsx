@@ -4,7 +4,17 @@ import { useId } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutGroup, motion } from "motion/react";
-import { Bot, ExternalLink, FileText, LayoutDashboard, LogOut, MessageCircle, Settings, type LucideIcon } from "lucide-react";
+import {
+  Bot,
+  ExternalLink,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  MessageCircle,
+  Settings,
+  ShieldCheck,
+  type LucideIcon,
+} from "lucide-react";
 import { useLinkWhatsapp } from "@/components/layout/botao-whatsapp";
 import { CURVA_IMPULSO } from "@/components/movimento";
 import { useAuth } from "@/lib/auth";
@@ -23,6 +33,9 @@ const ITENS: ItemMenu[] = [
   { href: "/dashboard/curriculo", rotulo: "Currículos", icone: FileText },
   { href: "/dashboard/entrevistas", rotulo: "Entrevistas", icone: Bot },
 ];
+
+/** Só para a conta ADMIN (a área e a API também conferem; o menu só esconde o caminho de quem não é). */
+const ADMINISTRACAO: ItemMenu = { href: "/dashboard/admin", rotulo: "Administração", icone: ShieldCheck };
 
 const CONFIGURACOES: ItemMenu = { href: "/dashboard/perfil", rotulo: "Configurações", icone: Settings };
 
@@ -84,6 +97,7 @@ export function PainelNav({ aoNavegar, aoSair, saindo }: PainelNavProps) {
   const { user } = useAuth();
   // Cada instância (barra lateral e gaveta do celular) tem o próprio indicador animado
   const grupo = useId();
+  const itens = user?.tipoUsuario === "ADMIN" ? [...ITENS, ADMINISTRACAO] : ITENS;
 
   return (
     <LayoutGroup id={grupo}>
@@ -93,7 +107,7 @@ export function PainelNav({ aoNavegar, aoSair, saindo }: PainelNavProps) {
             Painel
           </p>
           <ul className="flex flex-col gap-1">
-            {ITENS.map((item) => (
+            {itens.map((item) => (
               <li key={item.href}>
                 <LinkMenu item={item} pathname={pathname} aoNavegar={aoNavegar} />
               </li>

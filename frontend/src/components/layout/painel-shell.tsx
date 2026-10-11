@@ -21,6 +21,7 @@ const SECOES: Array<{ prefixo: string; nome: string }> = [
   { prefixo: "/dashboard/curriculo", nome: "Currículos" },
   { prefixo: "/dashboard/entrevistas", nome: "Entrevistas" },
   { prefixo: "/dashboard/perfil", nome: "Configurações" },
+  { prefixo: "/dashboard/admin", nome: "Administração" },
 ];
 
 function nomeDaSecao(pathname: string): string {

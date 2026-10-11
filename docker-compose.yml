@@ -85,7 +85,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-impulso}:${POSTGRES_PASSWORD:-impulso}@postgres:5432/${POSTGRES_DB:-impulso_jovem}?schema=public
       REDIS_URL: redis://redis:6379
       S3_ENDPOINT: http://minio:9000
-      SMTP_HOST: mailpit
+      # O e-mail (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM) vem do backend/.env: scripts/configurar-email.sh
     depends_on:
       postgres:
         condition: service_healthy

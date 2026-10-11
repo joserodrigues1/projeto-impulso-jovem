@@ -75,7 +75,8 @@ async function erroDaResposta(response: Response): Promise<ApiError> {
   return new ApiError(mensagens[0], response.status, mensagens);
 }
 
-export async function fetchApi<T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> {
+/** Faz a requisição renovando a sessão uma vez no 401; respostas de erro viram ApiError. */
+async function requisitar(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const ehFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const headers = new Headers(options.headers);
   if (!ehFormData && options.body !== undefined && !headers.has("Content-Type")) {
@@ -101,10 +102,61 @@ export async function fetchApi<T = unknown>(endpoint: string, options: RequestIn
   if (sessaoExpirou) avisarSessaoExpirada();
 
   if (!response.ok) throw await erroDaResposta(response);
+  return response;
+}
+
+export async function fetchApi<T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const response = await requisitar(endpoint, options);
   if (response.status === 204) return null as T;
 
   const texto = await response.text();
   return (texto ? JSON.parse(texto) : null) as T;
+}
+
+/** Endereço da API visto pelo navegador (pelo proxy) — para links diretos, como o download de planilhas. */
+export function urlDaApi(endpoint: string): string {
+  return `${BASE_URL}${endpoint}`;
+}
+
+/** Nome do arquivo informado pela API no Content-Disposition (filename*= ou filename=). */
+function nomeDoArquivo(response: Response): string | null {
+  const cabecalho = response.headers.get("Content-Disposition") ?? "";
+  const codificado = /filename\*\s*=\s*(?:UTF-8'')?([^;]+)/i.exec(cabecalho)?.[1];
+  if (codificado) {
+    try {
+      return decodeURIComponent(codificado.trim().replace(/^"|"$/g, ""));
+    } catch {
+      // segue para o filename simples
+    }
+  }
+  return /filename\s*=\s*"?([^";]+)"?/i.exec(cabecalho)?.[1]?.trim() || null;
+}
+
+/**
+ * Baixa um arquivo da API (ex.: planilha CSV) com a mesma renovação de sessão do fetchApi —
+ * um link comum receberia o erro em JSON quando o acesso tivesse expirado.
+ */
+export async function baixarArquivo(endpoint: string, nomePadrao: string): Promise<void> {
+  const response = await requisitar(endpoint);
+  let blob: Blob;
+  try {
+    blob = await response.blob();
+  } catch {
+    throw new ApiError("A conexão caiu durante o download. Tente de novo.", 0);
+  }
+  const url = URL.createObjectURL(blob);
+  try {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = nomeDoArquivo(response) ?? nomePadrao;
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } finally {
+    // Dá tempo ao navegador de começar o download antes de liberar a memória
+    setTimeout(() => URL.revokeObjectURL(url), 30_000);
+  }
 }
 
 /** Mensagem amigável para exibir na tela a partir de qualquer erro. */

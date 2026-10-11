@@ -7,6 +7,7 @@ import { configuracaoLogger } from './common/logger/logger.config';
 import { configuracaoThrottler } from './common/throttler/throttler.config';
 import { isProducao } from './config/env';
 import { InfraModule } from './infra/infra.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CurriculosModule } from './modules/curriculos/curriculos.module';
 import { EntrevistasModule } from './modules/entrevistas/entrevistas.module';
@@ -26,6 +27,7 @@ import { UsuariosModule } from './modules/usuarios/usuarios.module';
     CurriculosModule,
     EntrevistasModule,
     SistemaModule,
+    AdminModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

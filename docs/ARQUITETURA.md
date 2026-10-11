@@ -45,10 +45,10 @@ O deploy é automático: push na `main` → runner no servidor → `git pull` �
   `postgres:5432` na rede do Docker; porta publicada em todas as interfaces passa por cima do UFW). `api` e `web` têm
   `restart: unless-stopped` (voltam sozinhos depois de reiniciar o servidor). A porta `3333` da API continua publicada
   (o n8n pode chamá-la de fora).
-- **E-mail em produção:** o serviço `api` do compose força `SMTP_HOST: mailpit` (e `S3_ENDPOINT: http://minio:9000`) no
-  bloco `environment:`, que tem prioridade sobre o `backend/.env`. O Mailpit não existe no perfil `full`, então a
-  recuperação de senha, as boas-vindas e o aviso de senha alterada **não saem** até um SMTP real ser configurado — veja
-  "E-mail no servidor" no README. O envio falha só no log (aviso), sem erro para o usuário.
+- **E-mail em produção:** o SMTP vem do `backend/.env` (`SMTP_HOST/PORT/USER/PASS`, `MAIL_FROM`); configure com
+  `scripts/configurar-email.sh` (veja "E-mail no servidor" no README). Sem SMTP real, a recuperação de senha, as
+  boas-vindas e o aviso de senha alterada **não saem** — o envio falha só no log (aviso), sem erro para o usuário. O
+  compose ainda força `S3_ENDPOINT: http://minio:9000` (não há armazenamento de arquivos ligado no servidor).
 
 ## 3. Banco de dados (resumo)
 
@@ -391,6 +391,37 @@ destaques: string[] (até 2), melhoria: { titulo, comoMelhorar } | null }` para 
 - `dataRealizacao` padrão = início da sessão (ou agora, sem sessão); data mais de 5 min no futuro é ignorada.
 
 `GET sessoes/:id/transcricao` devolve no máximo as **300 mensagens mais recentes** (em ordem cronológica).
+
+### 5.7 Painel do administrador (`/admin`) — só `tipoUsuario: 'ADMIN'`
+
+Duas travas em todas as rotas: `@Roles(ADMIN)` (token de acesso) e `AdminAtivoGuard`, que **confere no banco a cada
+requisição** se a conta ainda é ADMIN e está ativa (rebaixar ou bloquear vale na hora, sem esperar o token vencer).
+Respostas com `Cache-Control: no-store`. As rotas recusam (403) o que o navegador marca como vindo de outro site
+(`Sec-Fetch-Site: cross-site`/`same-site`), porque abrir uma ficha ou baixar a planilha tem efeito e o cookie é
+`SameSite=Lax`.
+
+| Método | Rota | Query | Resposta |
+|---|---|---|---|
+| GET | `/admin/resumo` | `de?`, `ate?` (AAAA-MM-DD) | `ResumoUso`: participantes (total, novos, ativos 7/30 dias, bloqueados), currículos (com IA, áudio, currículo antigo, falhas), simulações (status, nota média), classificações, funil e `semanas` |
+| GET | `/admin/participantes` | paginação, `busca?`, `uf?`, `status?`, `ordenar?` (`cadastro`\|`ultimoAcesso`\|`nome`\|`ultimaNota`), `direcao?` | `Paginado<ParticipanteResumo>` — sem contas ADMIN, WhatsApp mascarado |
+| GET | `/admin/participantes/:id` | — | ficha: dados, currículos, simulações e atividade recente **(auditado)** |
+| GET | `/admin/participantes/:id/curriculos/:curriculoId` | — | o currículo como o jovem vê **(auditado)** |
+| GET | `/admin/participantes/:id/simulacoes/:sessaoId` | — | conversa da simulação + relatório **(auditado)** |
+| GET | `/admin/auditoria` | paginação, `acao?`, `usuarioId?`, `busca?`, `de?`, `ate?` | `Paginado<RegistroAuditoriaAdmin>` — IP mascarado, detalhes sem conteúdo |
+| GET | `/admin/auditoria/acoes` | — | `Array<{ acao, rotulo, total }>` |
+| GET | `/admin/exportar/participantes.csv` | os filtros da lista (sem paginação) | CSV **(auditado)**, 10/min |
+| GET | `/admin/exportar/uso.csv` | `de?`, `ate?` | CSV, uma linha por semana **(auditado)**, 10/min |
+
+- **Período:** fuso de São Paulo; padrão = últimos 30 dias; máximo 366 dias.
+- **Ids de outro participante** (currículo ou simulação que não é da pessoa da URL) e ids inválidos → **404**, como se
+  não existissem.
+- **Auditoria das visualizações (LGPD):** `ADMIN_VISUALIZOU` (com `participanteId` e o recurso) e `ADMIN_EXPORTOU`.
+  O registro é gravado **antes** de entregar o conteúdo; se a gravação falhar, a rota responde 500 e não entrega nada
+  (`AuditoriaService.registrarOuFalhar`). O login certo também é auditado (`LOGIN_SUCESSO`).
+- **CSV:** UTF-8 com BOM e `;` (abre direto no Excel em português); célula que começa com `= + - @` ganha um `'` na
+  frente (não vira fórmula).
+- **Ninguém vira ADMIN pelo site** (não há rota para isso): a promoção é feita no banco — ver `DEPLOY-SERVIDOR.md`,
+  seção 5. O menu "Administração" aparece depois que a pessoa sai e entra de novo.
 
 ## 6. n8n — contratos de entrada/saída
 

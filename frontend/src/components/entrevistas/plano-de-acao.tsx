@@ -11,6 +11,8 @@ interface PlanoDeAcaoProps {
   /** Usado para guardar o progresso de cada relatório separadamente neste navegador. */
   entrevistaId: string;
   passos: RelatorioEntrevista["planoDeAcao"];
+  /** Só a lista numerada, sem caixas de "feito" (ex.: administração vendo o relatório de alguém). */
+  somenteLeitura?: boolean;
 }
 
 const chaveProgresso = (id: string) => `ij:plano-acao:${id}`;
@@ -45,8 +47,45 @@ const FAISCAS = [
   { x: -4, y: 28, cor: "bg-marca" },
 ] as const;
 
-/** Plano de ação numerado, com checklist salvo no navegador e marcação animada. */
-export function PlanoDeAcao({ entrevistaId, passos }: PlanoDeAcaoProps) {
+/** Plano de ação numerado; para o participante, com checklist salvo no navegador e marcação animada. */
+export function PlanoDeAcao({ somenteLeitura = false, ...props }: PlanoDeAcaoProps) {
+  return somenteLeitura ? <ListaDePassos passos={props.passos} /> : <PlanoDeAcaoInterativo {...props} />;
+}
+
+/** Só os passos numerados, sem caixas de "feito" nem progresso (não lê nem grava o navegador). */
+function ListaDePassos({ passos }: { passos: RelatorioEntrevista["planoDeAcao"] }) {
+  return (
+    <ol className="space-y-2.5">
+      {passos.map((item, i) => (
+        <li
+          key={i}
+          className="flex items-start gap-3 rounded-2xl border border-border bg-background/60 p-3.5 break-inside-avoid dark:bg-white/[0.02]"
+        >
+          <span
+            aria-hidden="true"
+            className="flex size-6 shrink-0 items-center justify-center rounded-full bg-marca font-display text-xs font-bold text-white"
+          >
+            {i + 1}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block leading-relaxed text-foreground">
+              <span className="sr-only">Passo {i + 1}: </span>
+              {item.passo}
+            </span>
+            {item.prazo && (
+              <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                <span aria-hidden="true" className="size-1.5 rounded-full bg-ciano" />
+                Prazo: {item.prazo}
+              </span>
+            )}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function PlanoDeAcaoInterativo({ entrevistaId, passos }: Omit<PlanoDeAcaoProps, "somenteLeitura">) {
   // Só é renderizado no navegador (depois de buscar o relatório), então dá para ler o localStorage aqui.
   const [concluidos, setConcluidos] = useState(() => lerConcluidos(entrevistaId, passos.length));
   const idGradiente = useId();

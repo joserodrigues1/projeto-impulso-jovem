@@ -109,8 +109,8 @@ docker compose --profile full up -d --force-recreate api
 ## 3. O `.env` completo, para referência
 
 O script já deixa o `backend/.env` assim. As linhas marcadas com `(gerada)` recebem valores aleatórios no servidor;
-as demais podem ficar como estão. `DATABASE_URL`, `REDIS_URL`, `S3_ENDPOINT` e `SMTP_HOST` são sobrepostas pelo
-`docker-compose.yml` (o valor do `.env` não é usado para elas).
+as demais podem ficar como estão. `DATABASE_URL`, `REDIS_URL` e `S3_ENDPOINT` são sobrepostas pelo
+`docker-compose.yml` (o valor do `.env` não é usado para elas). O e-mail é configurado com `scripts/configurar-email.sh`.
 
 ```dotenv
 NODE_ENV=production
@@ -135,11 +135,11 @@ S3_ACCESS_KEY=impulso
 S3_SECRET_KEY=impulso-secret
 S3_FORCE_PATH_STYLE=true
 
-SMTP_HOST=localhost                             # (o compose sobrepõe com "mailpit")
-SMTP_PORT=1025
-SMTP_USER=
-SMTP_PASS=
-MAIL_FROM="Impulso Jovem <nao-responda@impulsojovem.com.br>"
+SMTP_HOST=smtp.resend.com                       # scripts/configurar-email.sh preenche estas 5 linhas
+SMTP_PORT=465
+SMTP_USER=resend
+SMTP_PASS=(chave de API do provedor)
+MAIL_FROM="Impulso Jovem <nao-responda@jose-de-ia.online>"
 
 LGPD_TERMO_VERSAO=2026.1
 
@@ -156,11 +156,10 @@ SESSAO_MIN_MENSAGENS_CANDIDATO=3
 
 **Pendências conhecidas (não impedem o site de funcionar):**
 
-- **E-mail** (recuperação de senha): o compose aponta o envio para um `mailpit` que está desligado, então os e-mails
-  não saem. Para ativar, é preciso um SMTP real (ex.: o do Google Workspace, Brevo, Amazon SES) e tirar a linha
-  `SMTP_HOST: mailpit` do `docker-compose.yml`, para valer o `SMTP_HOST` do `.env`.
-- **Foto de perfil**: o armazenamento (MinIO/S3) também está desligado no compose; o envio de foto falha até
-  configurar um bucket.
+- **E-mail** (recuperação de senha, boas-vindas): sai só depois de configurar um provedor SMTP — crie a conta (ex.: Resend,
+  grátis até 100 e-mails por dia), verifique o domínio e rode `bash scripts/configurar-email.sh`.
+- **Fotos**: o site guarda a foto do currículo só no navegador do jovem (a política de privacidade promete isso), então
+  não há armazenamento de arquivos no servidor. Os endpoints de upload da API respondem 503 enquanto não houver um S3.
 
 ---
 
@@ -183,3 +182,27 @@ Siga [`INTEGRACAO-N8N.md`](./INTEGRACAO-N8N.md) a partir do **passo 2** (credenc
   Evolution e o n8n no mesmo servidor e o n8n atrás da Cloudflare, para o endereço interno
   `http://NOME-DO-CONTAINER-DO-N8N:5678/webhook/whatsapp-rh` com `ACEITAR_REDE_INTERNA=true` no ⚙️ Configuração da
   Recrutadora (sem token; veja `INTEGRACAO-N8N.md`, passo 4).
+
+---
+
+## 5. Painel do administrador: dar (ou tirar) acesso
+
+Não existe botão no site para virar administrador — de propósito. A conta é criada normalmente pelo cadastro e depois
+promovida direto no banco, no servidor (troque `EMAIL` pelo e-mail da conta):
+
+```bash
+docker exec ij-postgres sh -c "psql -U \$POSTGRES_USER -d \$POSTGRES_DB -c \"update usuarios set tipo_usuario='ADMIN' where email='EMAIL'\""
+```
+
+Deve responder `UPDATE 1`. A pessoa **sai e entra de novo** no site e o menu **Administração** aparece. Para tirar o
+acesso, o mesmo comando com `tipo_usuario='USUARIO'` — vale na hora para a API (o painel para de responder), e o menu
+some no próximo login.
+
+Para ver quem é administrador hoje:
+
+```bash
+docker exec ij-postgres sh -c "psql -U \$POSTGRES_USER -d \$POSTGRES_DB -c \"select email, status_conta from usuarios where tipo_usuario='ADMIN'\""
+```
+
+Tudo o que o administrador abre (ficha, currículo, conversa) e cada planilha exportada fica registrado na
+**Auditoria** do próprio painel. Contas de administração não aparecem na lista de participantes nem nos números.
